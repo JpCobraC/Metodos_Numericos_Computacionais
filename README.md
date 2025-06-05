@@ -16,4 +16,4 @@ Para executar os notebooks, é necessário ter instalado:
 Instalação dos pacotes (via pip):
 
 ```bash
-pip install numpy matplotlib scipy
+pip install -r requirements.txt
