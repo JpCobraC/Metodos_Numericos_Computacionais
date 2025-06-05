@@ -25,7 +25,7 @@ def fatorial(n):
 
 def bisseccao(f, a, b, tol=1e-6, max_iter=100):
     if f(a) * f(b) >= 0:
-        raise ValueError("f(a) e f(b) devem ter sinais opostos.")
+        print("f(a) e f(b) devem ter sinais opostos.")
     for _ in range(max_iter):
         m = (a + b) / 2
         if abs(f(m)) < tol or (b - a) / 2 < tol:
