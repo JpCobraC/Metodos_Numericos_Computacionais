@@ -138,3 +138,25 @@ def reg_lin_mult(x1,x2,y,n):
     r2= 1-(R/(np.sum(y**2)-((np.sum(y))**2)/n))
     print("Coeficiente de determinação para a reta dos mínimos quadrados:",r2)
     return None
+
+def reg_lin_mult2(x, y):
+    import numpy as np
+    n = len(x)
+    x0 = n
+    x1 = np.sum(x)
+    x2 = np.sum(x**2)
+    x3 = np.sum(x**3)
+    x4 = np.sum(x**4)
+    y0 = np.sum(y)
+    xy = np.sum(x*y)
+    x2y = np.sum((x**2)*y)
+
+    A = np.array([
+        [x0, x1, x2],
+        [x1, x2, x3],
+        [x2, x3, x4]
+    ])
+    B = np.array([y0, xy, x2y])
+
+    a0, a1, a2 = np.linalg.solve(A, B)
+    return a0, a1, a2
