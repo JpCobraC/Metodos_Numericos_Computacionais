@@ -11,7 +11,7 @@ Para executar os notebooks, é necessário ter instalado:
 - Bibliotecas:
   - NumPy
   - Matplotlib
-  - SciPy (quando necessário)
+  - Pandas
 
 Instalação dos pacotes (via pip):
 
