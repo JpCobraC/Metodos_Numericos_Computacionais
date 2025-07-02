@@ -1,3 +1,5 @@
+# Pacote de funções 1
+
 def zero_do_computador():
     e = 1.0
     while (e + 1.0 > 1.0):
