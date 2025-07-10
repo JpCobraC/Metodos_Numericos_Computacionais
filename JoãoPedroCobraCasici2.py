@@ -102,6 +102,40 @@ def decomp_lu(A):
             L[j, i] = (A[j, i] - sum(L[j, k] * U[k, i] for k in range(i))) / U[i, i]
     return L, U
 
+import numpy as np
+
+def decomp_lu_pivot(A, b):
+    n = A.shape[0]
+    L = np.identity(n, dtype=float)
+    U = A.astype(float).copy()
+    p = np.arange(n)
+
+    for k in range(n - 1):
+        pivot_row_index = np.argmax(np.abs(U[k:, k])) + k
+        
+        if pivot_row_index != k:
+            U[[k, pivot_row_index]] = U[[pivot_row_index, k]]
+            p[[k, pivot_row_index]] = p[[pivot_row_index, k]]
+            if k > 0:
+                L[[k, pivot_row_index], :k] = L[[pivot_row_index, k], :k]
+        
+        for i in range(k + 1, n):
+            L[i, k] = U[i, k] / U[k, k]
+            U[i, k:] -= L[i, k] * U[k, k:]
+            U[i, k] = 0
+    
+    b_permuted = b[p]
+
+    y = np.zeros(n)
+    for i in range(n):
+        y[i] = b_permuted[i] - np.dot(L[i, :i], y[:i])
+
+    x = np.zeros(n)
+    for i in range(n - 1, -1, -1):
+        x[i] = (y[i] - np.dot(U[i, i + 1:], x[i + 1:])) / U[i, i]
+        
+    return x
+
 def lagrange_interpol(x, y, x_interp):
     import numpy as np
     x = np.array(x, dtype=float)
