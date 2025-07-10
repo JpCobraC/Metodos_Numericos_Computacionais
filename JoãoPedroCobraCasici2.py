@@ -1,4 +1,5 @@
 # Pacote de funções 2
+# João Pedro Cobra Casici
 
 def triangular_inferior(a, b):
     import numpy as np
@@ -33,11 +34,10 @@ def triangular_superior(a, b):
         
         if a[i, i] == 0:
             print(f"Erro: O elemento U[{i},{i}] é zero.")
-            return None
+            return None 
         x[i] = (b[i] - soma_termos) / a[i, i]
 
     return x
-
 
 def gauss_pivot_parcial(A_original, b_original):
     import numpy as np
@@ -86,3 +86,81 @@ def gauss_pivot_parcial(A_original, b_original):
         x[i] = (matriz_aumentada[i, num_colunas] - np.dot(matriz_aumentada[i, i+1:num_colunas], x[i+1:num_colunas])) / matriz_aumentada[i, i]
 
     return x
+
+def decomp_lu(A):
+    import numpy as np
+    n = A.shape[0]
+    L = np.zeros_like(A, dtype=float)
+    U = np.zeros_like(A, dtype=float)
+    for i in range(n):
+        L[i, i] = 1.0
+        for j in range(i, n):
+            U[i, j] = A[i, j] - sum(L[i, k] * U[k, j] for k in range(i))
+        for j in range(i+1, n):
+            if U[i, i] == 0:
+                raise ValueError("Zero na diagonal de U. Não é possível decompor sem pivotamento.")
+            L[j, i] = (A[j, i] - sum(L[j, k] * U[k, i] for k in range(i))) / U[i, i]
+    return L, U
+
+def lagrange_interpol(x, y, x_interp):
+    import numpy as np
+    x = np.array(x, dtype=float)
+    y = np.array(y, dtype=float)
+    x_interp = np.array(x_interp, dtype=float)
+    def L(k, x0):
+        prod = 1.0
+        for i in range(len(x)):
+            if i != k:
+                prod *= (x0 - x[i]) / (x[k] - x[i])
+        return prod
+    if x_interp.ndim == 0:
+        return sum(y[k] * L(k, x_interp) for k in range(len(x)))
+    else:
+        return np.array([sum(y[k] * L(k, xi) for k in range(len(x))) for xi in x_interp])
+
+def trapezio_simples(f, a, b):
+    return (b - a) * (f(a) + f(b)) / 2
+
+def trapezio_composto(f, a, b, n=100):
+    import numpy as np
+
+    h = (b - a) / n
+    x = np.linspace(a, b, n+1)
+    y = f(x)
+    return (h/2) * (y[0] + 2 * np.sum(y[1:-1]) + y[-1])
+
+def gauss_sem_pivotamento(A, b):
+    import numpy as np
+    A = np.array(A, dtype=float)
+    b = np.array(b, dtype=float)
+    n = len(b)
+    Ab = np.hstack([A, b.reshape(-1, 1)])
+
+    for k in range(n-1):
+        if Ab[k, k] == 0:
+            print(f"Zero na diagonal principal em linha {k}. Não é possível resolver sem pivotamento.")
+            return None
+        for i in range(k+1, n):
+            m = Ab[i, k] / Ab[k, k]
+            Ab[i, k:] = Ab[i, k:] - m * Ab[k, k:]
+
+    x = np.zeros(n)
+    for i in range(n-1, -1, -1):
+        if Ab[i, i] == 0:
+            print(f"Zero na diagonal principal em linha {i}. Sistema impossível ou indeterminado.")
+            return None
+        x[i] = (Ab[i, -1] - np.dot(Ab[i, i+1:n], x[i+1:n])) / Ab[i, i]
+    return x
+
+def decomp_cholesky(A):
+    import numpy as np
+    n = A.shape[0]
+    L = np.zeros_like(A)
+    for i in range(n):
+        for j in range(i+1):
+            s = sum(L[i][k] * L[j][k] for k in range(j))
+            if i == j:
+                L[i][j] = np.sqrt(A[i][i] - s)
+            else:
+                L[i][j] = (A[i][j] - s) / L[j][j]
+    return L
