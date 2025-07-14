@@ -39,6 +39,27 @@ def triangular_superior(a, b):
 
     return x
 
+def avaliar_polinomio(coef, x):
+    resultado = 0
+    grau = len(coef) - 1
+    for i in range(len(coef)):
+        resultado += coef[i] * x**(grau - i)
+    return resultado
+
+def melhor_grau(x, y, grau_max):
+    melhor_rmse = float('inf')
+    melhor_grau = 1
+    melhor_coef = None
+    for grau in range(1, grau_max + 1):
+        coef = np.polyfit(x, y, grau)
+        y_pred = np.polyval(coef, x)
+        rmse = np.sqrt(np.mean((y - y_pred)**2))
+        if rmse < melhor_rmse:
+            melhor_rmse = rmse
+            melhor_grau = grau
+            melhor_coef = coef
+    return melhor_grau, melhor_coef
+
 def gauss_pivot_parcial(A_original, b_original):
     import numpy as np
     A = A_original.copy().astype(float)

@@ -1,4 +1,5 @@
 # Pacote de funções 1
+# João Pedro Cobra Casici
 
 def zero_do_computador():
     e = 1.0
