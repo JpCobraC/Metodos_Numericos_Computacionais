@@ -40,24 +40,43 @@ def triangular_superior(a, b):
     return x
 
 def avaliar_polinomio(coef, x):
+    import numpy as np
     resultado = 0
     grau = len(coef) - 1
     for i in range(len(coef)):
         resultado += coef[i] * x**(grau - i)
     return resultado
 
+def polyfit_manual(x, y, grau):
+    import numpy as np
+    A = np.zeros((len(x), grau + 1))
+    for i in range(len(x)):
+        for j in range(grau + 1):
+            A[i, j] = x[i]**(grau - j)
+
+    A_T_A = A.T @ A 
+    A_T_y = A.T @ y
+    coef = np.linalg.solve(A_T_A, A_T_y)
+    
+    return coef
+
 def melhor_grau(x, y, grau_max):
+    import numpy as np
     melhor_rmse = float('inf')
     melhor_grau = 1
     melhor_coef = None
+    
     for grau in range(1, grau_max + 1):
-        coef = np.polyfit(x, y, grau)
-        y_pred = np.polyval(coef, x)
+        coef = polyfit_manual(x, y, grau)
+        
+        y_pred = np.array([avaliar_polinomio(coef, xi) for xi in x])
         rmse = np.sqrt(np.mean((y - y_pred)**2))
+        
         if rmse < melhor_rmse:
             melhor_rmse = rmse
             melhor_grau = grau
             melhor_coef = coef
+            
     return melhor_grau, melhor_coef
 
 def gauss_pivot_parcial(A_original, b_original):
@@ -126,6 +145,7 @@ def decomp_lu(A):
 import numpy as np
 
 def decomp_lu_pivot(A, b):
+    import numpy as np
     n = A.shape[0]
     L = np.identity(n, dtype=float)
     U = A.astype(float).copy()
@@ -219,3 +239,68 @@ def decomp_cholesky(A):
             else:
                 L[i][j] = (A[i][j] - s) / L[j][j]
     return L
+
+def integral_num_simples(func, x_ini, x_fin):
+  return ((func(x_ini) + func(x_fin)) / 2) * (x_fin - x_ini)
+
+def integral_numerica(func, x_ini, x_fin, n_points=100_000):
+    import numpy as np
+    points = np.linspace(x_ini, x_fin, n_points)
+    y = func(points)
+    h = (x_fin - x_ini) / (n_points - 1)
+    integral = h * (np.sum(y) - (y[0] + y[-1]) / 2)
+    return integral
+
+def antiderivada(x):
+  import numpy as np
+  return (np.e**x / 101) * (np.sin(10*x) - 10 * np.cos(10*x)) + 8 * x
+
+def integral_trapezio_composta(func, x_ini, x_fin, n_points=1000):
+    import numpy as np
+    x = np.linspace(x_ini, x_fin, n_points)
+    y = func(x)
+    h = (x_fin - x_ini) / (n_points - 1)
+    return h * (np.sum(y) - (y[0] + y[-1]) / 2)
+
+def gerar_tabela_diferencas(x_i, y_i):
+    n = len(x_i)
+
+    tabela_diferencas = np.full((n, n), np.nan)
+    tabela_diferencas[:, 0] = y_i
+
+    for j in range(1, n):
+        for i in range(n - j):
+            numerador = tabela_diferencas[i+1, j-1] - tabela_diferencas[i, j-1]
+            denominador = x_i[i+j] - x_i[i]
+            tabela_diferencas[i, j] = numerador / denominador
+
+    largura_i = 5
+    largura_x = 10
+    largura_dados = 12
+
+    partes_header = [f"{'i':<{largura_i}}", f"{'x_i':<{largura_x}}"]
+    partes_header.append(f"{'y_i':<{largura_dados}}")
+    for k in range(1, n):
+        partes_header.append(f"{f'D^{k} y_i':<{largura_dados}}")
+
+    header_str = " | ".join(partes_header)
+
+    separador_str = "-" * len(header_str)
+
+    tabela_final_str = f"{header_str}\n{separador_str}\n"
+
+    for i in range(n):
+        partes_linha = [
+            f"{i:<{largura_i}}",
+            f"{x_i[i]:<{largura_x}.4f}"
+        ]
+        for j in range(n):
+            valor = tabela_diferencas[i, j]
+            if np.isnan(valor):
+                partes_linha.append(f"{'':<{largura_dados}}")
+            else:
+                partes_linha.append(f"{valor:<{largura_dados}.4f}")
+
+        tabela_final_str += " | ".join(partes_linha) + "\n"
+
+    return tabela_final_str
