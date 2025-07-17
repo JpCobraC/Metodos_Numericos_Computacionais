@@ -304,3 +304,304 @@ def gerar_tabela_diferencas(x_i, y_i):
         tabela_final_str += " | ".join(partes_linha) + "\n"
 
     return tabela_final_str
+
+def PolinomioLagrange(x_data, y_data, x_eval):
+    import numpy as np
+    
+    try:
+        x_d = np.asarray(x_data, dtype=float)
+        y_d = np.asarray(y_data, dtype=float)
+    except Exception as e:
+        raise TypeError("x_data and y_data must be convertible to NumPy float arrays.") from e
+
+    if x_d.ndim != 1 or y_d.ndim != 1:
+        raise ValueError("x_data and y_data must be 1D arrays.")
+    if len(x_d) != len(y_d):
+        raise ValueError("x_data and y_data must have the same length.")
+    if len(x_d) == 0:
+        raise ValueError("Input arrays x_data and y_data cannot be empty.")
+    if len(np.unique(x_d)) != len(x_d):
+        raise ValueError("Points in x_data must be unique for Lagrange interpolation.")
+
+    n_points = len(x_d)
+    _is_scalar_eval = np.isscalar(x_eval)
+
+    try:
+        x_e_arr = np.atleast_1d(np.asarray(x_eval, dtype=float))
+    except Exception as e:
+        raise TypeError("x_eval must be a scalar or array-like type convertible to a NumPy float array.") from e
+
+    if x_e_arr.ndim > 1:
+        raise ValueError("If an array, x_eval must be 1D.")
+
+    P_x_eval_arr = np.zeros_like(x_e_arr, dtype=float)
+
+    for j in range(n_points):
+        yj = y_d[j]
+        xj = x_d[j]
+        
+        L_j_x = np.ones_like(x_e_arr, dtype=float)
+        for i in range(n_points):
+            if i == j:
+                continue
+            xi = x_d[i]
+            L_j_x *= (x_e_arr - xi) / (xj - xi)
+
+        P_x_eval_arr += yj * L_j_x
+
+    if _is_scalar_eval:
+        return P_x_eval_arr[0]
+    else:
+        return P_x_eval_arr
+
+def ObterDiferencaDividida(x, y, i, j):
+    import numpy as np
+
+    try:
+        x = np.asarray(x, dtype=float)
+        y = np.asarray(y, dtype=float)
+    except (TypeError, ValueError):
+        raise TypeError("Inputs x and y must be array-like and numeric.")
+
+    n = len(x)
+    if x.ndim != 1 or y.ndim != 1:
+        raise ValueError("x and y must be 1D arrays.")
+    if n != len(y):
+        raise ValueError("x and y must have the same length.")
+    if n == 0:
+        raise ValueError("Input arrays cannot be empty.")
+    if len(np.unique(x)) != len(x):
+        raise ValueError("All x values must be unique for this method.")
+    if not (0 <= j < n and 0 <= i < n - j):
+        raise ValueError(f"Indices i={i}, j={j} are out of bounds for n={n}.")
+
+    memo = {}
+
+    def _calculate_diff(start_idx, order):
+        if (start_idx, order) in memo:
+            return memo[(start_idx, order)]
+
+        if order == 0:
+            return y[start_idx]
+
+        numerator = (_calculate_diff(start_idx + 1, order - 1) -
+                     _calculate_diff(start_idx, order - 1))
+        
+        denominator = x[start_idx + order] - x[start_idx]
+        
+        result = numerator / denominator
+        
+        memo[(start_idx, order)] = result
+        return result
+
+    return _calculate_diff(i, j)
+
+def GerarTabelaDiferencasDivididas(x, y):
+    import numpy as np
+
+    try:
+        x = np.asarray(x, dtype=float)
+        y = np.asarray(y, dtype=float)
+    except (TypeError, ValueError):
+        raise TypeError("Inputs x and y must be array-like and numeric.")
+
+    if x.ndim != 1 or y.ndim != 1:
+        raise ValueError("x and y must be 1D arrays.")
+    if len(x) != len(y):
+        raise ValueError("x and y must have the same length.")
+    if len(x) == 0:
+        raise ValueError("Input arrays cannot be empty.")
+    if len(np.unique(x)) != len(x):
+        raise ValueError("All x values must be unique for this method.")
+
+    n = len(x)
+    diff_table = np.full((n, n), np.nan)
+    diff_table[:, 0] = y
+
+    for j in range(1, n):
+        for i in range(n - j):
+            numerator = diff_table[i + 1, j - 1] - diff_table[i, j - 1]
+            denominator = x[i + j] - x[i]
+            diff_table[i, j] = numerator / denominator
+
+    index_width = 5
+    x_width = 10
+    data_width = 12
+
+    header_parts = [
+        f"{'i':<{index_width}}",
+        f"{'x_i':<{x_width}}",
+        f"{'y_i':<{data_width}}"
+    ]
+    for k in range(1, n):
+        header_parts.append(f"{f'D^{k} y_i':<{data_width}}")
+
+    header_str = " | ".join(header_parts)
+    separator_str = "-" * len(header_str)
+    
+    table_string = f"{header_str}\n{separator_str}\n"
+
+    for i in range(n):
+        row_parts = [
+            f"{i:<{index_width}}",
+            f"{x[i]:<{x_width}.4f}"
+        ]
+        for j in range(n):
+            value = diff_table[i, j]
+            if np.isnan(value):
+                row_parts.append(f"{'':<{data_width}}")
+            else:
+                row_parts.append(f"{value:<{data_width}.4f}")
+        
+        table_string += " | ".join(row_parts) + "\n"
+
+    return table_string
+
+def IntegracaoNumericaSimples(func, x_ini, x_fin):
+    return ((func(x_ini) + func(x_fin)) / 2) * (x_fin - x_ini)
+
+def IntegracaoNumerica(func, x_ini, x_fin, n_points=100_000):
+    import numpy as np
+
+    if n_points < 3:
+        raise ValueError("n_points must be 3 or greater to have at least one interior point.")
+
+    points = np.linspace(x_ini, x_fin, n_points)
+    step_size = (x_fin - x_ini) / (n_points - 1)
+    
+    integral_sum = np.sum(func(points[1:-1]))
+    
+    return integral_sum * step_size
+
+def PlotarComparacaoAreaIntegracao(func, antiderivative, x_start, x_end, func_label="f(x)", integration_method=None, method_name="Numerical Method"):
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    if integration_method is None:
+        integration_method = lambda f, a, b: ((f(a) + f(b)) / 2) * (b - a)
+        method_name = "Simple Trapezoid"
+
+    exact_value = antiderivative(x_end) - antiderivative(x_start)
+    approx_value = integration_method(func, x_start, x_end)
+
+    print(f"Exact Integral Value: {exact_value:.6f}")
+    print(f"Approximate Value ({method_name}): {approx_value:.6f}")
+    print(f"Absolute Error: {abs(exact_value - approx_value):.6f}")
+
+    plt.figure(figsize=(12, 7))
+
+    plot_range_start = x_start - 0.2 * (x_end - x_start)
+    plot_range_end = x_end + 0.2 * (x_end - x_start)
+    x_curve = np.linspace(min(0, plot_range_start), plot_range_end, 500)
+    y_curve = func(x_curve)
+
+    plt.plot(x_curve, y_curve, 'k', linewidth=2.5, label=f'Curve of ${func_label}$')
+
+    x_fill_exact = np.linspace(x_start, x_end, 200)
+    y_fill_exact = func(x_fill_exact)
+    plt.fill_between(
+        x_fill_exact, y_fill_exact, color='blue', alpha=0.4,
+        label=f'Exact Area ≈ {exact_value:.4f}'
+    )
+
+    trap_x_points = [x_start, x_end, x_end, x_start]
+    trap_y_points = [func(x_start), func(x_end), 0, 0]
+    plt.fill(
+        trap_x_points, trap_y_points, edgecolor='red', facecolor='red', alpha=0.4,
+        label=f'Approx. Area (Visual) = {approx_value:.4f}'
+    )
+
+    plt.title(f'Exact Integral vs. {method_name} Approximation')
+    plt.xlabel('x')
+    plt.ylabel('f(x)')
+    plt.grid(True, linestyle='--', alpha=0.6)
+    plt.axhline(0, color='black', linewidth=0.8)
+    plt.legend()
+    plt.show()
+
+def FormulaDeNewton(x, y, x_val):
+    import numpy as np
+
+    try:
+        x = np.asarray(x, dtype=float)
+        y = np.asarray(y, dtype=float)
+    except (TypeError, ValueError):
+        raise TypeError("Inputs x and y must be array-like and numeric.")
+
+    if x.ndim != 1 or y.ndim != 1:
+        raise ValueError("x and y must be 1D arrays.")
+    if len(x) != len(y):
+        raise ValueError("x and y must have the same length.")
+    if len(x) == 0:
+        raise ValueError("Input arrays cannot be empty.")
+    if len(np.unique(x)) != len(x):
+        raise ValueError("All x values must be unique for Newton's method.")
+
+    n = len(x)
+    divided_diffs = np.zeros((n, n))
+    divided_diffs[:, 0] = y
+
+    for j in range(1, n):
+        for i in range(n - j):
+            numerator = divided_diffs[i + 1, j - 1] - divided_diffs[i, j - 1]
+            denominator = x[i + j] - x[i]
+            divided_diffs[i, j] = numerator / denominator
+
+    coeffs = divided_diffs[0]
+    
+    result = coeffs[0]
+    product_term = 1.0
+
+    for j in range(1, n):
+        product_term *= (x_val - x[j - 1])
+        result += coeffs[j] * product_term
+
+    return result
+
+def SubstituicaoProgressiva(L, C):
+    import numpy as np
+
+    try:
+        L = np.asarray(L, dtype=float)
+        C = np.asarray(C, dtype=float)
+    except (TypeError, ValueError):
+        raise TypeError("Inputs L and C must be array-like and numeric.")
+
+    n = L.shape[0]
+    if L.shape != (n, n) or C.shape != (n,):
+        raise ValueError("Incompatible dimensions: L must be n-by-n and C must be n.")
+
+    x = np.zeros(n, dtype=float)
+    for i in range(n):
+        if L[i, i] == 0:
+            raise ValueError(f"Zero on diagonal at L[{i},{i}]. Matrix is singular.")
+
+        dot_product = np.dot(L[i, :i], x[:i])
+
+        x[i] = (C[i] - dot_product) / L[i, i]
+
+    return x
+
+def SubstituicaoRegressiva(U, C):
+    import numpy as np
+    
+    try:
+        U = np.asarray(U, dtype=float)
+        C = np.asarray(C, dtype=float)
+    except (TypeError, ValueError):
+        raise TypeError("Inputs U and C must be array-like and numeric.")
+
+    n = U.shape[0]
+    if U.shape != (n, n) or C.shape != (n,):
+        raise ValueError("Incompatible dimensions: U must be n-by-n and C must be n.")
+
+    x = np.zeros(n, dtype=float)
+    for i in range(n - 1, -1, -1):
+        if U[i, i] == 0:
+            raise ValueError(f"Zero on diagonal at U[{i},{i}]. Matrix is singular.")
+
+        dot_product = np.dot(U[i, i + 1:], x[i + 1:])
+
+        x[i] = (C[i] - dot_product) / U[i, i]
+
+    return x
