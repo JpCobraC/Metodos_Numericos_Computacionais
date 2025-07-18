@@ -305,7 +305,7 @@ def gerar_tabela_diferencas(x_i, y_i):
 
     return tabela_final_str
 
-def PolinomioLagrange(x_data, y_data, x_eval):
+def polinomio_lagrange(x_data, y_data, x_eval):
     import numpy as np
     
     try:
@@ -354,7 +354,7 @@ def PolinomioLagrange(x_data, y_data, x_eval):
     else:
         return P_x_eval_arr
 
-def ObterDiferencaDividida(x, y, i, j):
+def diferenca_dividida(x, y, i, j):
     import numpy as np
 
     try:
@@ -396,7 +396,7 @@ def ObterDiferencaDividida(x, y, i, j):
 
     return _calculate_diff(i, j)
 
-def GerarTabelaDiferencasDivididas(x, y):
+def tabela_diferencas_divididas(x, y):
     import numpy as np
 
     try:
@@ -457,10 +457,10 @@ def GerarTabelaDiferencasDivididas(x, y):
 
     return table_string
 
-def IntegracaoNumericaSimples(func, x_ini, x_fin):
+def integracao_numerica_simples(func, x_ini, x_fin):
     return ((func(x_ini) + func(x_fin)) / 2) * (x_fin - x_ini)
 
-def IntegracaoNumerica(func, x_ini, x_fin, n_points=100_000):
+def integracao_numerica(func, x_ini, x_fin, n_points=100_000):
     import numpy as np
 
     if n_points < 3:
@@ -473,7 +473,7 @@ def IntegracaoNumerica(func, x_ini, x_fin, n_points=100_000):
     
     return integral_sum * step_size
 
-def PlotarComparacaoAreaIntegracao(func, antiderivative, x_start, x_end, func_label="f(x)", integration_method=None, method_name="Numerical Method"):
+def plotar_comparacao_area_integracao(func, antiderivative, x_start, x_end, func_label="f(x)", integration_method=None, method_name="Numerical Method"):
     import numpy as np
     import matplotlib.pyplot as plt
 
@@ -519,7 +519,7 @@ def PlotarComparacaoAreaIntegracao(func, antiderivative, x_start, x_end, func_la
     plt.legend()
     plt.show()
 
-def FormulaDeNewton(x, y, x_val):
+def interpol_newton(x, y, x_val):
     import numpy as np
 
     try:
@@ -558,7 +558,7 @@ def FormulaDeNewton(x, y, x_val):
 
     return result
 
-def SubstituicaoProgressiva(L, C):
+def subst_progressiva(L, C):
     import numpy as np
 
     try:
@@ -582,7 +582,7 @@ def SubstituicaoProgressiva(L, C):
 
     return x
 
-def SubstituicaoRegressiva(U, C):
+def subist_regressiva(U, C):
     import numpy as np
     
     try:
